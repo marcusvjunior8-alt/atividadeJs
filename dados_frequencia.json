@@ -1,0 +1,21 @@
+[
+  {
+    "matricula": "1201",
+    "nome": "finao",
+    "turma": "ti",
+    "curso": "ti",
+    "historico": [
+      {
+        "data": "120921",
+        "status": "F"
+      }
+    ]
+  },
+  {
+    "matricula": "144",
+    "nome": "guigs",
+    "turma": "ti",
+    "curso": "ti",
+    "historico": []
+  }
+]
