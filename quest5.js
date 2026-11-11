@@ -2,100 +2,44 @@ const prompt = require('prompt-sync')();
 
 const alunos = [];
 
-function cadastrarAluno() {
-    console.log("\n--- Cadastro de Aluno ---");
-    const matricula = prompt("Matrícula: ");
+function cadastrar(){
+    let matricula = prompt('Matricula: ')
 
-    const matriculaExiste = alunos.some(aluno => aluno.matricula === matricula);
-    if (matriculaExiste) {
-        console.log("Erro: Esta matrícula já está cadastrada no sistema.");
-        return;
+    if(alunos.find(aluno=> aluno.matricula === matricula)){
+        console.log('Error: Matrícula já existe')
+        return
     }
+    let nome = prompt('nome:')
+    let idade = prompt('idade:')
+    let curso = prompt('curso:')
 
-    const nome = prompt("Nome: ");
-    const idade = parseInt(prompt("Idade: "));
-    const curso = prompt("Curso: ");
-
-    alunos.push({
-        matricula: matricula,
-        nome: nome,
-        idade: idade,
-        curso: curso
-    });
-
-    console.log("Aluno cadastrado com sucesso!");
+    alunos.push({nome,idade,curso,matricula})
+    console.log('aluno cadastrado!\n')
 }
 
-function listarAlunos() {
-    console.log("\n--- Lista de Alunos ---");
-    console.log(`Total de alunos: ${alunos.length}\n`);
+function pesquisarNome(){
+    let busca = prompt('buscar nome:').toLocaleLowerCase
+    let resultados = alunos.find(aluno => aluno.nome.toLocaleLowerCase() === busca)
 
-    if (alunos.length === 0) {
-        console.log("Nenhum aluno cadastrado ainda.");
-        return;
-    }
-
-    alunos.forEach((aluno, index) => {
-        console.log(`${index + 1}. Matrícula: ${aluno.matricula} | Nome: ${aluno.nome} | Idade: ${aluno.idade} | Curso: ${aluno.curso}`);
-    });
-}
-
-function pesquisarPorNome() {
-    console.log("\n--- Pesquisa por Nome ---");
-    const termo = prompt("Digite o nome exato do aluno: ").toLowerCase();
-    
-    const aluno = alunos.find(a => a.nome.toLowerCase() === termo);
-
-    if (aluno) {
-        console.log("1 resultado encontrado:");
-        console.log(`Matrícula: ${aluno.matricula} | Nome: ${aluno.nome} | Curso: ${aluno.curso}`);
-    } else {
-        console.log("Nenhum registro corresponde à pesquisa.");
+    if(resultados.legth > 0){
+        console.log(`\n${resultados.length} resultado(s) encontrado(s):`)
+        resultados.forEach(a => {
+            console.log(`Matrícula: ${a.matricula} | Nome: ${a.nome} | Curso: ${a.curso}`)
+        })
+        console.log('')
+    }else {
+        console.log('\nNenhum registro corresponde à pesquisa.\n')
     }
 }
-
-function filtrarPorCurso() {
-    console.log("\n--- Filtro por Curso ---");
-    const termo = prompt("Digite o nome do curso: ").toLowerCase();
-    
-    const resultados = alunos.filter(a => a.curso.toLowerCase() === termo);
-
-    if (resultados.length > 0) {
-        console.log(`${resultados.length} resultado(s) encontrado(s):`);
-        resultados.forEach(aluno => {
-            console.log(`Matrícula: ${aluno.matricula} | Nome: ${aluno.nome} | Curso: ${aluno.curso}`);
-        });
-    } else {
-        console.log("Nenhum registro corresponde à pesquisa.");
+while(true){
+    let opcao = prompt('1-Cadastrar | 2-Pesquisar Nome | 3-Filtrar Curso | 4-Sair : ')
+    if (opcao === '1') {
+        cadastrar()
+    } else if (opcao === '2') {
+        pesquisarNome()
+    } else if (opcao === '3') {
+        filtrarCurso()
+    } else if (opcao === '4') {
+        break
     }
 }
-
-function iniciarSistema() {
-    while (true) {
-        console.log("\n=== Sistema de Gestão de Alunos ===");
-        console.log("1. Cadastrar novo aluno");
-        console.log("2. Listar alunos cadastrados");
-        console.log("3. Pesquisar aluno por nome");
-        console.log("4. Filtrar alunos por curso");
-        console.log("5. Sair");
-        
-        const opcao = prompt("Escolha uma opção: ");
-
-        if (opcao === '1') {
-            cadastrarAluno();
-        } else if (opcao === '2') {
-            listarAlunos();
-        } else if (opcao === '3') {
-            pesquisarPorNome();
-        } else if (opcao === '4') {
-            filtrarPorCurso();
-        } else if (opcao === '5') {
-            console.log("Encerrando o sistema...");
-            break;
-        } else {
-            console.log("Opção inválida! Digite uma opção de 1 a 5.");
-        }
-    }
-}
-
-iniciarSistema();

@@ -1,158 +1,71 @@
 const prompt = require('prompt-sync')();
-const fs = require('fs');
 
-const ARQUIVO = 'dashboard_escolar.json';
 let estudantes = [];
 
-function carregarDados() {
-    if (fs.existsSync(ARQUIVO)) {
-        const dados = fs.readFileSync(ARQUIVO, 'utf8');
-        estudantes = JSON.parse(dados);
-    }
-}
-
-function salvarDados() {
-    fs.writeFileSync(ARQUIVO, JSON.stringify(estudantes, null, 2));
-}
-
-function cadastrarEstudante() {
-    console.log("\n--- Cadastrar Estudante ---");
-    const matricula = prompt("Matrícula: ");
-
-    if (estudantes.some(e => e.matricula === matricula)) {
-        console.log("Erro: Matrícula já cadastrada.");
-        return;
-    }
-
-    const nome = prompt("Nome: ");
-    const turma = prompt("Turma (ex: 1A, 2B): ").toUpperCase();
+function cadastrar() {
+    let matricula = prompt('Matrícula: ');
+    let nome = prompt('Nome: ');
+    let turma = prompt('Turma: ');
     
-    const nota1 = parseFloat(prompt("Nota 1: "));
-    const nota2 = parseFloat(prompt("Nota 2: "));
-    const nota3 = parseFloat(prompt("Nota 3: "));
-
-    const presencas = parseInt(prompt("Aulas presentes: "));
-    const totalAulas = parseInt(prompt("Total de aulas ministradas: "));
-
-    if (isNaN(nota1) || isNaN(nota2) || isNaN(nota3) || isNaN(presencas) || isNaN(totalAulas) || totalAulas <= 0) {
-        console.log("Erro: Dados numéricos inválidos.");
-        return;
-    }
+    let n1 = parseFloat(prompt('Nota 1: '));
+    let n2 = parseFloat(prompt('Nota 2: '));
+    let n3 = parseFloat(prompt('Nota 3: '));
+    
+    let presencas = parseInt(prompt('Presenças: '));
+    let aulas = parseInt(prompt('Total de aulas: '));
 
     estudantes.push({
-        matricula,
-        nome,
-        turma,
-        notas: [nota1, nota2, nota3],
-        presencas,
-        totalAulas
+        matricula, nome, turma, 
+        notas: [n1, n2, n3], 
+        presencas, aulas
     });
-
-    salvarDados();
-    console.log("Estudante cadastrado com sucesso!");
-    exibirDashboard();
+    console.log('Aluno cadastrado com sucesso!\n');
 }
 
-function calcularStatus(media) {
-    if (media >= 7.0) return 'Aprovado';
-    if (media >= 5.0) return 'Recuperação';
-    return 'Reprovado';
-}
+function dashboard() {
+    let filtroTurma = prompt('Filtrar por turma (deixe vazio para ver todas): ');
+    
+    let lista = filtroTurma ? estudantes.filter(e => e.turma === filtroTurma) : estudantes;
 
-function desenharBarra(porcentagem) {
-    const tamanhoMaximo = 20;
-    const blocosPreenchidos = Math.round((porcentagem / 100) * tamanhoMaximo);
-    const barra = '█'.repeat(blocosPreenchidos) + '░'.repeat(tamanhoMaximo - blocosPreenchidos);
-    return `[${barra}] ${porcentagem.toFixed(1)}%`;
-}
-
-function exibirDashboard() {
-    console.log("\n=============================================");
-    console.log("       DASHBOARD DE INDICADORES ESCOLARES     ");
-    console.log("=============================================");
-
-    if (estudantes.length === 0) {
-        console.log("Nenhum dado cadastrado.");
+    if (lista.length === 0) {
+        console.log('Nenhum registo encontrado.\n');
         return;
     }
 
-    const filtroTurma = prompt("Filtrar por turma (deixe em branco para TODAS): ").toUpperCase();
-
-    let dadosFiltrados = estudantes;
-    if (filtroTurma) {
-        dadosFiltrados = estudantes.filter(e => e.turma === filtroTurma);
-    }
-
-    if (dadosFiltrados.length === 0) {
-        console.log(`Nenhum registro encontrado para a turma ${filtroTurma}.`);
-        return;
-    }
-
-    const resumoEstudantes = dadosFiltrados.map(e => {
-        const somaNotas = e.notas.reduce((acc, n) => acc + n, 0);
-        const media = somaNotas / e.notas.length;
-        const freqPercentual = (e.presencas / e.totalAulas) * 100;
-        const status = calcularStatus(media);
-
-        return {
-            ...e,
-            media,
-            freqPercentual,
-            status
-        };
+    let estatisticas = lista.map(e => {
+        let somaNotas = e.notas.reduce((acumulador, nota) => acumulador + nota, 0);
+        let media = somaNotas / e.notas.length;
+        let freq = (e.presencas / e.aulas) * 100;
+        
+        let status = media >= 7 ? 'Aprovado' : (media >= 5 ? 'Recuperação' : 'Reprovado');
+        
+        return { media, freq, status };
     });
 
-    const somaDasMedias = resumoEstudantes.reduce((acc, e) => acc + e.media, 0);
-    const mediaGeralTurma = somaDasMedias / resumoEstudantes.length;
+    let somaGeral = estatisticas.reduce((acc, e) => acc + e.media, 0);
+    let mediaGeral = somaGeral / estatisticas.length;
 
-    const somaFrequencias = resumoEstudantes.reduce((acc, e) => acc + e.freqPercentual, 0);
-    const mediaFrequenciaTurma = somaFrequencias / resumoEstudantes.length;
+    let total = estatisticas.length;
+    let aprovados = estatisticas.filter(e => e.status === 'Aprovado').length;
+    let rec = estatisticas.filter(e => e.status === 'Recuperação').length;
+    let reprovados = estatisticas.filter(e => e.status === 'Reprovado').length;
 
-    const aprovados = resumoEstudantes.filter(e => e.status === 'Aprovado').length;
-    const recuperacao = resumoEstudantes.filter(e => e.status === 'Recuperação').length;
-    const reprovados = resumoEstudantes.filter(e => e.status === 'Reprovado').length;
-
-    const total = resumoEstudantes.length;
-    const pctAprovados = (aprovados / total) * 100;
-    const pctRecuperacao = (recuperacao / total) * 100;
-    const pctReprovados = (reprovados / total) * 100;
-
-    console.log(`\nTurma: ${filtroTurma || 'TODAS'} | Total de Alunos: ${total}`);
-    console.log(`Média Geral de Desempenho: ${mediaGeralTurma.toFixed(2)}`);
-    console.log(`Frequência Média Geral: ${mediaFrequenciaTurma.toFixed(1)}%`);
-
-    console.log("\n--- GRÁFICOS DE DESEMPENHO (PERCENTUAIS) ---");
-    console.log(`Aprovados:    ${desenharBarra(pctAprovados)} (${aprovados})`);
-    console.log(`Recuperação:  ${desenharBarra(pctRecuperacao)} (${recuperacao})`);
-    console.log(`Reprovados:   ${desenharBarra(pctReprovados)} (${reprovados})`);
-
-    console.log("\n--- DETALHAMENTO DOS ESTUDANTES ---");
-    resumoEstudantes.forEach(e => {
-        console.log(`Nome: ${e.nome} | Turma: ${e.turma} | Média: ${e.media.toFixed(2)} | Freq: ${e.freqPercentual.toFixed(1)}% | Status: ${e.status}`);
-    });
+    console.log(`\n--- Dashboard (${filtroTurma || 'Geral'}) ---`);
+    console.log(`Total de Estudantes: ${total}`);
+    console.log(`Média Geral: ${mediaGeral.toFixed(2)}`);
+    console.log(`Aprovados: ${aprovados} (${((aprovados/total)*100).toFixed(1)}%)`);
+    console.log(`Em Recuperação: ${rec} (${((rec/total)*100).toFixed(1)}%)`);
+    console.log(`Reprovados: ${reprovados} (${((reprovados/total)*100).toFixed(1)}%)\n`);
 }
 
-function iniciarSistema() {
-    carregarDados();
-
-    while (true) {
-        console.log("\n=== Menu Principal ===");
-        console.log("1. Cadastrar Estudante e Notas");
-        console.log("2. Visualizar Dashboard / Indicadores");
-        console.log("3. Sair");
-
-        const opcao = prompt("Escolha uma opção: ");
-
-        if (opcao === '1') {
-            cadastrarEstudante();
-        } else if (opcao === '2') {
-            exibirDashboard();
-        } else if (opcao === '3') {
-            break;
-        } else {
-            console.log("Opção inválida!");
-        }
+while (true) {
+    let opcao = prompt('1-Cadastrar | 2-Dashboard | 3-Sair : ');
+    
+    if (opcao === '1') {
+        cadastrar();
+    } else if (opcao === '2') {
+        dashboard();
+    } else if (opcao === '3') {
+        break;
     }
 }
-
-iniciarSistema();
